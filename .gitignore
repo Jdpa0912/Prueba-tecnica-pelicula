@@ -1,0 +1,35 @@
+# Entornos y dependencias de Python (Backend)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+env.bak/
+venv.bak/
+.pytest_cache/
+
+# Entornos de Node (Frontend)
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# Variables de entorno (¡CRUCIAL!)
+.env
+.env.local
+.env.*.local
+# Nota: NO ignores .env.example, ese sí debe subirse
+
+# Configuraciones de IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db
