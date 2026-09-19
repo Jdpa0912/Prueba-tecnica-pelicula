@@ -14,5 +14,6 @@ CREATE TABLE favoritas (
     poster VARCHAR(500),
     nota TEXT,
     date_added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    CONSTRAINT fk_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT uq_favoritas_usuario_pelicula UNIQUE (usuario_id, pelicula_id)
 );
