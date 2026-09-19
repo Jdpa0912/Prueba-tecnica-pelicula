@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.api.dependencias import SesionDB, UsuarioActual
 from app.esquemas.favorito import FavoritoActualizar, FavoritoCrear, FavoritoRespuesta
@@ -31,9 +32,29 @@ def listar_favoritos(usuario_actual: UsuarioActual, db: SesionDB) -> list[Favori
 def crear_favorito(datos: FavoritoCrear, usuario_actual: UsuarioActual, db: SesionDB) -> Favorito:
     """Guarda una película de resultados de búsqueda para el usuario actual."""
 
+    favorito_existente = db.scalar(
+        select(Favorito).where(
+            Favorito.usuario_id == usuario_actual.id,
+            Favorito.pelicula_id == datos.pelicula_id,
+        )
+    )
+    if favorito_existente is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Esta película ya está en tus favoritos.",
+        )
+
     favorito = Favorito(usuario_id=usuario_actual.id, **datos.model_dump())
     db.add(favorito)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # La restricción única también cubre dos solicitudes que pasan la comprobación a la vez.
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Esta película ya está en tus favoritos.",
+        )
     db.refresh(favorito)
     return favorito
 

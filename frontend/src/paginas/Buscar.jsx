@@ -8,6 +8,8 @@ export default function Buscar() {
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [error, setError] = useState('')
+  const [peliculasFavoritas, setPeliculasFavoritas] = useState(() => new Set())
+  const [peliculasAgregando, setPeliculasAgregando] = useState(() => new Set())
 
   const buscar = async (evento) => {
     evento.preventDefault()
@@ -24,12 +26,22 @@ export default function Buscar() {
   }
 
   const agregarFavorito = async (pelicula) => {
+    if (peliculasFavoritas.has(pelicula.pelicula_id) || peliculasAgregando.has(pelicula.pelicula_id)) return
+
     setError(''); setMensaje('')
+    setPeliculasAgregando((actuales) => new Set(actuales).add(pelicula.pelicula_id))
     try {
       await api.post('/favoritos', pelicula)
+      setPeliculasFavoritas((actuales) => new Set(actuales).add(pelicula.pelicula_id))
       setMensaje(`“${pelicula.titulo}” fue agregada a favoritos.`)
     } catch (respuestaError) {
       setError(respuestaError.response?.data?.detail || 'No fue posible agregar el favorito.')
+    } finally {
+      setPeliculasAgregando((actuales) => {
+        const siguientes = new Set(actuales)
+        siguientes.delete(pelicula.pelicula_id)
+        return siguientes
+      })
     }
   }
 
@@ -46,7 +58,11 @@ export default function Buscar() {
       {mensaje && <p className="mensaje exito" role="status">{mensaje}</p>}
       {cargando ? <div className="cargando" role="status">Buscando películas…</div> : (
         <section className="rejilla-peliculas" aria-live="polite">
-          {peliculas.map((pelicula) => <TarjetaPelicula key={pelicula.pelicula_id} pelicula={pelicula}><button className="boton" onClick={() => agregarFavorito(pelicula)}>Agregar a favoritos</button></TarjetaPelicula>)}
+          {peliculas.map((pelicula) => {
+            const yaEsFavorita = peliculasFavoritas.has(pelicula.pelicula_id)
+            const agregando = peliculasAgregando.has(pelicula.pelicula_id)
+            return <TarjetaPelicula key={pelicula.pelicula_id} pelicula={pelicula}><button className="boton" disabled={yaEsFavorita || agregando} onClick={() => agregarFavorito(pelicula)}>{yaEsFavorita ? 'En favoritos' : agregando ? 'Agregando…' : 'Agregar a favoritos'}</button></TarjetaPelicula>
+          })}
         </section>
       )}
     </main>
