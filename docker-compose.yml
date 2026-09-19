@@ -2,9 +2,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-peliculas}
-      POSTGRES_USER: ${POSTGRES_USER:-peliculas}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD es obligatoria}
+      POSTGRES_DB: peliculas
+      POSTGRES_USER: peliculas
+      POSTGRES_PASSWORD: peliculas
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -18,11 +18,10 @@ services:
   backend:
     build:
       context: ./backend
+    env_file:
+      - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-peliculas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-peliculas}
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es obligatoria}
-      TMDB_API_TOKEN: ${TMDB_API_TOKEN:-}
-      TMDB_LANGUAGE: ${TMDB_LANGUAGE:-es-ES}
+      DATABASE_URL: postgresql+psycopg2://peliculas:peliculas@db:5432/peliculas
     ports:
       - "8000:8000"
     depends_on:
@@ -40,7 +39,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
+        VITE_API_URL: http://localhost:8000/api/v1
     ports:
       - "5173:80"
     depends_on:
