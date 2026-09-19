@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class PeliculaRespuesta(BaseModel):
-    """Película normalizada a partir de la respuesta de iTunes."""
+    """Película normalizada a partir de la respuesta de TMDb."""
 
     pelicula_id: str
     titulo: str
