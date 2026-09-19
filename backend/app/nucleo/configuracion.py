@@ -20,6 +20,8 @@ class Configuracion(BaseSettings):
     jwt_secret: str = Field(min_length=32, validation_alias="JWT_SECRET")
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    tmdb_api_token: str | None = Field(default=None, validation_alias="TMDB_API_TOKEN")
+    tmdb_language: str = Field(default="es-ES", validation_alias="TMDB_LANGUAGE")
 
 
 @lru_cache
