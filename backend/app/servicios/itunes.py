@@ -56,10 +56,35 @@ async def buscar_peliculas(termino: str) -> list[PeliculaRespuesta]:
             detail="El servicio de búsqueda de películas no está disponible. Inténtalo de nuevo más tarde.",
         ) from error
 
-    resultados = contenido.get("results", []) if isinstance(contenido, dict) else []
-    if not isinstance(resultados, list):
-        logger.warning("iTunes devolvió una estructura de resultados inválida para la búsqueda %r", termino)
+    if not isinstance(contenido, dict):
+        logger.warning(
+            "iTunes devolvió un JSON que no es un objeto para la búsqueda %r: tipo=%s, URL=%s",
+            termino,
+            type(contenido).__name__,
+            respuesta.url,
+        )
         return []
+
+    resultados = contenido.get("results", [])
+    if not isinstance(resultados, list):
+        logger.warning(
+            "iTunes devolvió una estructura de resultados inválida para la búsqueda %r: "
+            "resultCount=%r, tipo de results=%s, URL=%s",
+            termino,
+            contenido.get("resultCount"),
+            type(resultados).__name__,
+            respuesta.url,
+        )
+        return []
+    if not resultados:
+        logger.warning(
+            "iTunes no devolvió resultados para la búsqueda %r: resultCount=%r, URL=%s",
+            termino,
+            contenido.get("resultCount"),
+            respuesta.url,
+        )
+        return []
+
     peliculas: list[PeliculaRespuesta] = []
     for resultado in resultados:
         if isinstance(resultado, dict) and (pelicula := normalizar_pelicula(resultado)) is not None:
