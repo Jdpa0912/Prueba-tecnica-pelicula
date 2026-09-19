@@ -18,6 +18,7 @@ class FavoritoCrear(PeliculaRespuesta):
     """Datos de una película que se guardará como favorita."""
 
     nota: str | None = Field(default=None, max_length=5000)
+    estrellas: int = Field(ge=1, le=5)
 
 
 class FavoritoActualizar(BaseModel):

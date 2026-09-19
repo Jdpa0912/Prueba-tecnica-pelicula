@@ -1,7 +1,9 @@
 """CRUD de favoritos limitado al usuario autenticado."""
 
-from fastapi import APIRouter, HTTPException, Response, status
-from sqlalchemy import select
+from enum import Enum
+
+from fastapi import APIRouter, HTTPException, Query, Response, status
+from sqlalchemy import Select, select
 from sqlalchemy.exc import IntegrityError
 
 from app.api.dependencias import SesionDB, UsuarioActual
@@ -9,6 +11,21 @@ from app.esquemas.favorito import FavoritoActualizar, FavoritoCrear, FavoritoRes
 from app.modelos.favorito import Favorito
 
 router = APIRouter(prefix="/favoritos", tags=["Favoritos"])
+
+
+class OrdenFavoritos(str, Enum):
+    """Campos disponibles para ordenar la colección de favoritos."""
+
+    fecha = "fecha"
+    year = "year"
+    estrellas = "estrellas"
+
+
+class DireccionOrden(str, Enum):
+    """Direcciones disponibles para el orden de favoritos."""
+
+    asc = "asc"
+    desc = "desc"
 
 
 def obtener_favorito_propietario(favorito_id: int, usuario_id: int, db: SesionDB) -> Favorito:
@@ -21,10 +38,26 @@ def obtener_favorito_propietario(favorito_id: int, usuario_id: int, db: SesionDB
 
 
 @router.get("", response_model=list[FavoritoRespuesta])
-def listar_favoritos(usuario_actual: UsuarioActual, db: SesionDB) -> list[Favorito]:
-    """Lista únicamente los favoritos del usuario autenticado."""
+def listar_favoritos(
+    usuario_actual: UsuarioActual,
+    db: SesionDB,
+    ordenar_por: OrdenFavoritos = Query(default=OrdenFavoritos.fecha),
+    direccion: DireccionOrden = Query(default=DireccionOrden.desc),
+) -> list[Favorito]:
+    """Lista favoritos propios, con orden por fecha, año o calificación."""
 
-    consulta = select(Favorito).where(Favorito.usuario_id == usuario_actual.id).order_by(Favorito.date_added.desc())
+    columnas_orden = {
+        OrdenFavoritos.fecha: Favorito.date_added,
+        OrdenFavoritos.year: Favorito.year,
+        OrdenFavoritos.estrellas: Favorito.estrellas,
+    }
+    columna = columnas_orden[ordenar_por]
+    orden = columna.asc() if direccion == DireccionOrden.asc else columna.desc()
+    consulta: Select[tuple[Favorito]] = (
+        select(Favorito)
+        .where(Favorito.usuario_id == usuario_actual.id)
+        .order_by(orden, Favorito.id.desc())
+    )
     return list(db.scalars(consulta).all())
 
 

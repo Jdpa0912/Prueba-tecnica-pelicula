@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.api.v1.favoritos import crear_favorito
+from app.api.v1.favoritos import DireccionOrden, OrdenFavoritos, crear_favorito, listar_favoritos
 from app.base_datos.conexion import Base
 from app.esquemas.favorito import FavoritoCrear
 from app.modelos.favorito import Favorito
@@ -48,7 +48,7 @@ def fabrica_sesiones(tmp_path):
 
 @pytest.fixture
 def pelicula() -> FavoritoCrear:
-    return FavoritoCrear(pelicula_id="603", titulo="The Matrix", year="1999")
+    return FavoritoCrear(pelicula_id="603", titulo="The Matrix", year="1999", estrellas=5)
 
 
 def test_crear_favorito_y_rechazar_duplicado(fabrica_sesiones, pelicula: FavoritoCrear) -> None:
@@ -82,3 +82,26 @@ def test_solicitudes_simultaneas_crean_un_solo_favorito(fabrica_sesiones, pelicu
     assert sorted(resultados) == [status.HTTP_201_CREATED, status.HTTP_409_CONFLICT]
     with fabrica_sesiones() as sesion:
         assert len(sesion.scalars(select(Favorito)).all()) == 1
+
+
+def test_listar_favoritos_ordena_por_estrellas_y_year(fabrica_sesiones) -> None:
+    usuario = type("UsuarioActual", (), {"id": 1})()
+    with fabrica_sesiones() as sesion:
+        sesion.add_all(
+            [
+                Favorito(usuario_id=1, pelicula_id="1", titulo="Primera", year="2024", estrellas=2),
+                Favorito(usuario_id=1, pelicula_id="2", titulo="Segunda", year="1999", estrellas=5),
+            ]
+        )
+        sesion.commit()
+
+        por_estrellas = listar_favoritos(usuario, sesion, OrdenFavoritos.estrellas, DireccionOrden.desc)
+        por_year = listar_favoritos(usuario, sesion, OrdenFavoritos.year, DireccionOrden.asc)
+
+    assert [favorito.pelicula_id for favorito in por_estrellas] == ["2", "1"]
+    assert [favorito.pelicula_id for favorito in por_year] == ["2", "1"]
+
+
+def test_calificacion_debe_estar_entre_una_y_cinco_estrellas() -> None:
+    with pytest.raises(ValueError):
+        FavoritoCrear(pelicula_id="603", titulo="The Matrix", estrellas=6)
