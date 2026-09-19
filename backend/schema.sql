@@ -13,6 +13,7 @@ CREATE TABLE favoritas (
     year VARCHAR(10),
     poster VARCHAR(500),
     nota TEXT,
+    estrellas SMALLINT NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
     date_added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     CONSTRAINT uq_favoritas_usuario_pelicula UNIQUE (usuario_id, pelicula_id)

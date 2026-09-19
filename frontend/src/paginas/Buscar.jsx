@@ -10,6 +10,7 @@ export default function Buscar() {
   const [error, setError] = useState('')
   const [peliculasFavoritas, setPeliculasFavoritas] = useState(() => new Set())
   const [peliculasAgregando, setPeliculasAgregando] = useState(() => new Set())
+  const [calificaciones, setCalificaciones] = useState({})
 
   const buscar = async (evento) => {
     evento.preventDefault()
@@ -27,11 +28,16 @@ export default function Buscar() {
 
   const agregarFavorito = async (pelicula) => {
     if (peliculasFavoritas.has(pelicula.pelicula_id) || peliculasAgregando.has(pelicula.pelicula_id)) return
+    const estrellas = calificaciones[pelicula.pelicula_id]
+    if (!estrellas) {
+      setError('Selecciona una calificación de 1 a 5 estrellas antes de agregar la película.')
+      return
+    }
 
     setError(''); setMensaje('')
     setPeliculasAgregando((actuales) => new Set(actuales).add(pelicula.pelicula_id))
     try {
-      await api.post('/favoritos', pelicula)
+      await api.post('/favoritos', { ...pelicula, estrellas })
       setPeliculasFavoritas((actuales) => new Set(actuales).add(pelicula.pelicula_id))
       setMensaje(`“${pelicula.titulo}” fue agregada a favoritos.`)
     } catch (respuestaError) {
@@ -61,7 +67,14 @@ export default function Buscar() {
           {peliculas.map((pelicula) => {
             const yaEsFavorita = peliculasFavoritas.has(pelicula.pelicula_id)
             const agregando = peliculasAgregando.has(pelicula.pelicula_id)
-            return <TarjetaPelicula key={pelicula.pelicula_id} pelicula={pelicula}><button className="boton" disabled={yaEsFavorita || agregando} onClick={() => agregarFavorito(pelicula)}>{yaEsFavorita ? 'En favoritos' : agregando ? 'Agregando…' : 'Agregar a favoritos'}</button></TarjetaPelicula>
+            const estrellas = calificaciones[pelicula.pelicula_id]
+            return <TarjetaPelicula key={pelicula.pelicula_id} pelicula={pelicula}>
+              <fieldset className="selector-estrellas">
+                <legend>Tu calificación</legend>
+                {[1, 2, 3, 4, 5].map((valor) => <button key={valor} type="button" className={`estrella ${estrellas >= valor ? 'seleccionada' : ''}`} aria-label={`${valor} ${valor === 1 ? 'estrella' : 'estrellas'}`} aria-pressed={estrellas === valor} onClick={() => setCalificaciones((actuales) => ({ ...actuales, [pelicula.pelicula_id]: valor }))}>★</button>)}
+              </fieldset>
+              <button className="boton" disabled={yaEsFavorita || agregando || !estrellas} onClick={() => agregarFavorito(pelicula)}>{yaEsFavorita ? 'En favoritos' : agregando ? 'Agregando…' : 'Agregar a favoritos'}</button>
+            </TarjetaPelicula>
           })}
         </section>
       )}

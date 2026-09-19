@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, SmallInteger, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.base_datos.conexion import Base
@@ -18,6 +18,7 @@ class Favorito(Base):
     __tablename__ = "favoritas"
     __table_args__ = (
         UniqueConstraint("usuario_id", "pelicula_id", name="uq_favoritas_usuario_pelicula"),
+        CheckConstraint("estrellas BETWEEN 1 AND 5", name="ck_favoritas_estrellas_rango"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -29,6 +30,7 @@ class Favorito(Base):
     year: Mapped[str | None] = mapped_column(String(10), nullable=True)
     poster: Mapped[str | None] = mapped_column(String(500), nullable=True)
     nota: Mapped[str | None] = mapped_column(Text, nullable=True)
+    estrellas: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     date_added: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
