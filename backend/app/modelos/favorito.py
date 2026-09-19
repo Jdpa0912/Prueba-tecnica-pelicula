@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.base_datos.conexion import Base
@@ -16,6 +16,7 @@ class Favorito(Base):
     """Película guardada por un usuario autenticado."""
 
     __tablename__ = "favoritas"
+    __table_args__ = (UniqueConstraint("usuario_id", "pelicula_id", name="uq_favoritas_usuario_pelicula"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     usuario_id: Mapped[int] = mapped_column(
