@@ -20,7 +20,6 @@ dist-ssr/
 .env
 .env.local
 .env.*.local
-# Nota: NO ignores .env.example, ese sí debe subirse
 
 # Configuraciones de IDE
 .vscode/
